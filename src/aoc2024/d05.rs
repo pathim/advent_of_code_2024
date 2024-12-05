@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    cmp,
+    collections::{HashMap, HashSet},
+};
 
 use crate::AocInput;
 
@@ -15,6 +18,20 @@ fn check(rules: &HashMap<i64, HashSet<i64>>, data_map: &HashMap<i64, usize>) -> 
         }
     }
     true
+}
+
+fn compare(rules: &HashMap<i64, HashSet<i64>>, a: &i64, b: &i64) -> cmp::Ordering {
+    if let Some(gt) = rules.get(a) {
+        if gt.contains(b) {
+            return cmp::Ordering::Less;
+        }
+    }
+    if let Some(lt) = rules.get(b) {
+        if lt.contains(a) {
+            return cmp::Ordering::Greater;
+        }
+    }
+    cmp::Ordering::Equal
 }
 
 pub fn f(input: AocInput) -> crate::AocResult {
@@ -43,6 +60,9 @@ pub fn f(input: AocInput) -> crate::AocResult {
         }
         if check(&rules, &data_map) {
             res1 += data_vec[data_vec.len() / 2];
+        } else {
+            data_vec.sort_unstable_by(|a, b| compare(&rules, a, b));
+            res2 += data_vec[data_vec.len() / 2];
         }
     }
     (res1, res2).into()
