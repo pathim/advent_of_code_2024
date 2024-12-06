@@ -1,6 +1,9 @@
 use chrono::TimeZone;
 use ex::Wrapper;
-use std::{collections::HashMap, io::BufRead};
+use std::{
+    collections::{HashMap, HashSet},
+    io::BufRead,
+};
 
 #[derive(Debug)]
 pub enum Error {
@@ -91,7 +94,7 @@ pub struct AocInput {
 }
 
 type Grid = Vec<Vec<char>>;
-type Positions = Vec<(usize, usize)>;
+type Positions = HashSet<(isize, isize)>;
 
 impl AocInput {
     pub fn try_new(year: i32, day: u32) -> Result<Self, Error> {
@@ -105,13 +108,13 @@ impl AocInput {
         self.to_2d_array_finding(|_| false).0
     }
     pub fn to_2d_array_finding(self, p: fn(char) -> bool) -> (Grid, Positions) {
-        let mut found = Vec::new();
+        let mut found = Positions::new();
         let mut res = Vec::new();
         for (y, l) in self.lines().enumerate() {
             let mut res_line = Vec::new();
             for (x, c) in l.unwrap().chars().enumerate() {
                 if p(c) {
-                    found.push((x, y));
+                    found.insert((x as isize, y as isize));
                 }
                 res_line.push(c);
             }
@@ -120,13 +123,13 @@ impl AocInput {
         (res, found)
     }
     pub fn to_2d_array_finding_chars(self, needles: &[char]) -> (Grid, HashMap<char, Positions>) {
-        let mut found: HashMap<char, Vec<(usize, usize)>> = HashMap::new();
+        let mut found: HashMap<char, Positions> = HashMap::new();
         let mut res = Vec::new();
         for (y, l) in self.lines().enumerate() {
             let mut res_line = Vec::new();
             for (x, c) in l.unwrap().chars().enumerate() {
                 if needles.contains(&c) {
-                    found.entry(c).or_default().push((x, y));
+                    found.entry(c).or_default().insert((x as isize, y as isize));
                 }
                 res_line.push(c);
             }
