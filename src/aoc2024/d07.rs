@@ -1,60 +1,23 @@
 use crate::AocInput;
 
-#[derive(Debug, PartialEq)]
-enum Op {
-    Add,
-    Mul,
-    Concat,
-}
-
-impl Op {
-    fn incr(&self) -> (Op, bool) {
-        match self {
-            Op::Add => (Self::Mul, false),
-            Op::Mul => (Self::Concat, false),
-            Op::Concat => (Self::Add, true),
-        }
-    }
-}
-#[derive(Debug)]
-struct Ops(Vec<Op>);
-
-impl Ops {
-    fn new(n: usize) -> Self {
-        Self((0..n).map(|_| Op::Add).collect())
-    }
-
-    fn incr(&mut self) -> bool {
-        for v in self.0.iter_mut() {
-            let (new_val, carry) = v.incr();
-            *v = new_val;
-            if !carry {
-                return false;
+fn calc(num: &[(u64, usize)], start_val: u64, target: u64, first: bool) -> (bool, bool) {
+    if let Some((n, l)) = num.first() {
+        let n = *n;
+        let mut found = false;
+        for o in [|a: u64, b: u64| a + b, |a: u64, b: u64| a * b] {
+            let (f, t) = calc(&num[1..], o(start_val, n), target, first);
+            if t {
+                if f {
+                    return (first, true);
+                }
+                found = true;
             }
         }
-        true
+        let val = start_val * 10u64.pow(*l as u32) + n;
+        found |= calc(&num[1..], val, target, false).1;
+        return (false, found);
     }
-}
-
-fn calc(num: &[&str], op: &Ops) -> (bool, u64) {
-    let mut res = num.first().unwrap().parse::<u64>().unwrap();
-    let mut is_first = true;
-    for (n, o) in num[1..].iter().zip(op.0.iter()) {
-        let val: u64 = n.parse().unwrap();
-        match o {
-            Op::Add => {
-                res += val;
-            }
-            Op::Mul => {
-                res *= val;
-            }
-            Op::Concat => {
-                is_first = false;
-                res = res * 10u64.pow(n.len() as u32) + val;
-            }
-        }
-    }
-    (is_first, res)
+    (first, start_val == target)
 }
 
 pub fn f(input: AocInput) -> crate::AocResult {
@@ -64,22 +27,16 @@ pub fn f(input: AocInput) -> crate::AocResult {
         let line = line.unwrap();
         let (r, nums) = line.trim().split_once(':').unwrap();
         let r: u64 = r.parse().unwrap();
-        let nums = nums.split_ascii_whitespace().collect::<Vec<_>>();
-        let mut op = Ops::new(nums.len() - 1);
-        let mut end = false;
-        let mut found = false;
-        while !end {
-            let (is_first, op_r) = calc(&nums, &op);
-            if r == op_r {
-                found = true;
-                if is_first {
-                    res1 += r;
-                    break;
-                }
-            }
-            end = op.incr();
-        }
+        let nums = nums
+            .split_ascii_whitespace()
+            .map(|x| (x.parse().unwrap(), x.len()))
+            .collect::<Vec<_>>();
+
+        let (first, found) = calc(&nums[1..], nums[0].0, r, true);
         if found {
+            if first {
+                res1 += r;
+            }
             res2 += r;
         }
     }
