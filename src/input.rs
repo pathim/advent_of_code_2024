@@ -93,8 +93,9 @@ pub struct AocInput {
     file: std::io::BufReader<std::fs::File>,
 }
 
-type Grid = Vec<Vec<char>>;
-type Positions = HashSet<(isize, isize)>;
+pub type Grid = Vec<Vec<char>>;
+pub type Position = (isize, isize);
+pub type Positions = HashSet<Position>;
 
 impl AocInput {
     pub fn try_new(year: i32, day: u32) -> Result<Self, Error> {
