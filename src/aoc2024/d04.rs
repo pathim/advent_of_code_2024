@@ -32,9 +32,7 @@ fn find_dir(grid: &[Vec<char>], x: isize, y: isize) -> Vec<(isize, isize)> {
 pub fn f(input: AocInput) -> crate::AocResult {
     let mut res1 = 0;
     let (grid, xs) = input.to_2d_array_finding_chars(&['X', 'A']);
-    for (x, y) in xs.get(&'X').unwrap() {
-        let x = *x as isize;
-        let y = *y as isize;
+    for (x, y) in xs.get(&'X').unwrap().iter().copied() {
         let dirs = find_dir(&grid, x, y);
         for (dx, dy) in dirs {
             if index_2d(&grid, x + 2 * dx, y + 2 * dy)
@@ -51,9 +49,7 @@ pub fn f(input: AocInput) -> crate::AocResult {
 
     let mut res2 = 0;
 
-    for (x, y) in xs.get(&'A').unwrap() {
-        let x = *x as isize;
-        let y = *y as isize;
+    for (x, y) in xs.get(&'A').unwrap().iter().copied() {
         let mut found = false;
         for dx in [-1, 1] {
             if let Some(c1) = index_2d(&grid, x + dx, y + dx.abs()) {
