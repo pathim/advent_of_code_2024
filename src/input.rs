@@ -1,9 +1,6 @@
 use chrono::TimeZone;
 use ex::Wrapper;
-use std::{
-    collections::{HashMap, HashSet},
-    io::BufRead,
-};
+use std::io::BufRead;
 
 #[derive(Debug)]
 pub enum Error {

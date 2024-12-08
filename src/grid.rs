@@ -88,7 +88,7 @@ impl Grid {
             data.push(res_line)
         }
         let height = data.len() as isize;
-        let width = data.get(0).unwrap().len() as isize;
+        let width = data.first().unwrap().len() as isize;
         let size = (width, height);
         Self {
             data,

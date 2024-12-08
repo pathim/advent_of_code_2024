@@ -12,14 +12,14 @@ pub fn f(input: AocInput) -> crate::AocResult {
     let mut targets1 = HashSet::new();
     let mut targets2 = HashSet::new();
     let grid = Grid::new(input, &stations);
-    for (_, station_pos) in &grid.locations {
+    for station_pos in grid.locations.values() {
         for pos0 in station_pos {
             for pos1 in station_pos {
                 if *pos0 == *pos1 {
                     continue;
                 }
                 let delta = pos1 - pos0;
-                let delta2 = delta / (delta.0.abs() as usize).gcd(delta.1.abs() as usize) as isize;
+                let delta2 = delta / (delta.0.unsigned_abs()).gcd(delta.1.unsigned_abs()) as isize;
                 let target = *pos1 + delta;
                 if grid.is_inside(target) {
                     targets1.insert(target);

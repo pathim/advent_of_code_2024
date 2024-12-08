@@ -5,14 +5,6 @@ use crate::{
     AocInput, Grid,
 };
 
-fn within<T: Ord>(val: T, lower: T, upper: T) -> bool {
-    val >= lower && val < upper
-}
-
-fn pos_within<T: Ord>(val: (T, T), lower: (T, T), upper: (T, T)) -> bool {
-    within(val.0, lower.0, upper.0) && within(val.1, lower.1, upper.1)
-}
-
 fn check_cycle(
     obstacles: &Positions,
     grid: &Grid,
