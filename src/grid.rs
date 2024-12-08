@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     fmt::Display,
-    ops::{Add, Sub},
+    ops::{Add, Div, Sub},
 };
 
 use crate::AocInput;
@@ -29,6 +29,13 @@ impl Sub for V2d {
         Self(self.0 - rhs.0, self.1 - rhs.1)
     }
 }
+impl Div<isize> for V2d {
+    type Output = V2d;
+
+    fn div(self, rhs: isize) -> Self::Output {
+        Self(self.0 / rhs, self.1 / rhs)
+    }
+}
 
 impl Add for &V2d {
     type Output = V2d;
@@ -42,6 +49,13 @@ impl Sub for &V2d {
 
     fn sub(self, rhs: Self) -> Self::Output {
         *self - *rhs
+    }
+}
+impl Div<isize> for &V2d {
+    type Output = V2d;
+
+    fn div(self, rhs: isize) -> Self::Output {
+        *self / rhs
     }
 }
 
