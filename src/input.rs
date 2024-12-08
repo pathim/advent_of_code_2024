@@ -93,10 +93,6 @@ pub struct AocInput {
     file: std::io::BufReader<std::fs::File>,
 }
 
-pub type Grid = Vec<Vec<char>>;
-pub type Position = (isize, isize);
-pub type Positions = HashSet<Position>;
-
 impl AocInput {
     pub fn try_new(year: i32, day: u32) -> Result<Self, Error> {
         let file = std::io::BufReader::new(get_input(year, day)?);
@@ -104,46 +100,5 @@ impl AocInput {
     }
     pub fn lines(self) -> impl Iterator<Item = std::io::Result<String>> {
         self.file.lines()
-    }
-    pub fn to_2d_array(self) -> Vec<Vec<char>> {
-        self.to_2d_array_finding(|_| false).0
-    }
-    pub fn to_2d_array_finding(self, p: fn(char) -> bool) -> (Grid, Positions) {
-        let mut found = Positions::new();
-        let mut res = Vec::new();
-        for (y, l) in self.lines().enumerate() {
-            let mut res_line = Vec::new();
-            for (x, c) in l.unwrap().chars().enumerate() {
-                if p(c) {
-                    found.insert((x as isize, y as isize));
-                }
-                res_line.push(c);
-            }
-            res.push(res_line)
-        }
-        (res, found)
-    }
-    pub fn to_2d_array_finding_chars(self, needles: &[char]) -> (Grid, HashMap<char, Positions>) {
-        let mut found: HashMap<char, Positions> = HashMap::new();
-        let mut res = Vec::new();
-        for (y, l) in self.lines().enumerate() {
-            let mut res_line = Vec::new();
-            for (x, c) in l.unwrap().chars().enumerate() {
-                if needles.contains(&c) {
-                    found.entry(c).or_default().insert((x as isize, y as isize));
-                }
-                res_line.push(c);
-            }
-            res.push(res_line)
-        }
-        (res, found)
-    }
-
-    pub fn to_2d_array_mapped<T>(self, map: fn(char) -> T) -> Vec<Vec<T>> {
-        let mut res = Vec::new();
-        for l in self.lines() {
-            res.push(l.unwrap().chars().map(map).collect())
-        }
-        res
     }
 }

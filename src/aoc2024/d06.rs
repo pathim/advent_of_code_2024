@@ -1,6 +1,9 @@
 use std::collections::HashSet;
 
-use crate::{input::Position, input::Positions, AocInput};
+use crate::{
+    grid::{Position, Positions},
+    AocInput, Grid,
+};
 
 fn within<T: Ord>(val: T, lower: T, upper: T) -> bool {
     val >= lower && val < upper
@@ -12,14 +15,14 @@ fn pos_within<T: Ord>(val: (T, T), lower: (T, T), upper: (T, T)) -> bool {
 
 fn check_cycle(
     obstacles: &Positions,
-    size: Position,
+    grid: &Grid,
     mut pos: Position,
     mut dir: Position,
     visited_so_far: &HashSet<(Position, Position)>,
 ) -> bool {
     let mut visited = HashSet::new();
     visited.insert((pos, dir));
-    while pos_within(pos, (0, 0), size) {
+    while grid.is_inside(pos) {
         let new_pos = (pos.0 + dir.0, pos.1 + dir.1);
         if obstacles.contains(&new_pos) {
             dir = (-dir.1, dir.0);
@@ -36,12 +39,16 @@ fn check_cycle(
 
 pub fn f(input: AocInput) -> crate::AocResult {
     let mut res2 = 0;
-    let (grid, mut found) = input.to_2d_array_finding_chars(&['#', '^']);
-    let height = grid.len();
-    let width = grid.first().unwrap().len();
-    let size = (height as isize, width as isize);
-    let start = found.get(&'^').unwrap().iter().next().copied().unwrap();
-    let obstacles = found.get_mut(&'#').unwrap();
+    let grid = Grid::new(input, &['#', '^']);
+    let start = grid
+        .locations
+        .get(&'^')
+        .unwrap()
+        .iter()
+        .next()
+        .copied()
+        .unwrap();
+    let mut obstacles = grid.locations.get(&'#').unwrap().clone();
     let mut dir = (0, -1);
     let mut visited = HashSet::new();
     let mut visited_with_dir = HashSet::new();
@@ -50,7 +57,7 @@ pub fn f(input: AocInput) -> crate::AocResult {
     visited.insert(pos);
     visited_with_dir.insert((pos, dir));
 
-    while pos_within(pos, (0, 0), size) {
+    while grid.is_inside(pos) {
         let new_pos = (pos.0 + dir.0, pos.1 + dir.1);
         if obstacles.contains(&new_pos) {
             dir = (-dir.1, dir.0);
@@ -59,7 +66,7 @@ pub fn f(input: AocInput) -> crate::AocResult {
         if !used_obstacles.contains(&new_pos) {
             used_obstacles.insert(new_pos);
             obstacles.insert(new_pos);
-            if check_cycle(obstacles, size, pos, dir, &visited_with_dir) {
+            if check_cycle(&obstacles, &grid, pos, dir, &visited_with_dir) {
                 res2 += 1;
             }
             obstacles.remove(&new_pos);

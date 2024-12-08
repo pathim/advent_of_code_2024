@@ -1,8 +1,10 @@
 mod aoc2024;
 mod aoc_result;
+mod grid;
 mod input;
 
 pub use aoc_result::AocResult;
+pub use grid::Grid;
 
 use clap::Parser;
 pub use input::AocInput;
