@@ -1,14 +1,59 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Display,
+    ops::{Add, Sub},
+};
 
 use crate::AocInput;
 
-pub type Position = (isize, isize);
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct V2d(pub isize, pub isize);
+
+impl V2d {
+    pub fn is_zero(self) -> bool {
+        self.0 == 0 && self.1 == 0
+    }
+}
+
+impl Add for V2d {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
+impl Sub for V2d {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0, self.1 - rhs.1)
+    }
+}
+
+impl Add for &V2d {
+    type Output = V2d;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        *self + *rhs
+    }
+}
+impl Sub for &V2d {
+    type Output = V2d;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        *self - *rhs
+    }
+}
+
+pub type Position = V2d;
 pub type Positions = HashSet<Position>;
 
+#[derive(Clone, Debug)]
 pub struct Grid {
     data: Vec<Vec<char>>,
     pub locations: HashMap<char, Positions>,
     size: (isize, isize),
+    pub overlay: HashMap<char, Positions>,
 }
 
 impl Grid {
@@ -22,7 +67,7 @@ impl Grid {
                     locations
                         .entry(c)
                         .or_default()
-                        .insert((x as isize, y as isize));
+                        .insert(V2d(x as isize, y as isize));
                 }
                 res_line.push(c);
             }
@@ -35,6 +80,7 @@ impl Grid {
             data,
             locations,
             size,
+            overlay: HashMap::new(),
         }
     }
 
@@ -43,8 +89,36 @@ impl Grid {
         let x: usize = x.try_into().ok()?;
         self.data.get(y).and_then(|l| l.get(x)).copied()
     }
+    pub fn index_2d_mut(&mut self, x: isize, y: isize) -> Option<&mut char> {
+        let y: usize = y.try_into().ok()?;
+        let x: usize = x.try_into().ok()?;
+        self.data.get_mut(y).and_then(|l| l.get_mut(x))
+    }
 
     pub fn is_inside(&self, pos: Position) -> bool {
         pos.0 >= 0 && pos.0 < self.size.0 && pos.1 >= 0 && pos.1 < self.size.1
+    }
+}
+
+impl Display for Grid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let data = if self.overlay.is_empty() {
+            None
+        } else {
+            let mut grid_copy = self.clone();
+            for (c, poss) in self.overlay.iter() {
+                for pos in poss {
+                    if let Some(x) = grid_copy.index_2d_mut(pos.0, pos.1) {
+                        *x = *c;
+                    }
+                }
+            }
+            Some(grid_copy.data)
+        };
+        let vis_data = data.as_ref().unwrap_or(&self.data);
+        for line in vis_data {
+            writeln!(f, "{}", line.iter().collect::<String>())?;
+        }
+        Ok(())
     }
 }

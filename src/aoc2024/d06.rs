@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::{
-    grid::{Position, Positions},
+    grid::{Positions, V2d},
     AocInput, Grid,
 };
 
@@ -16,16 +16,16 @@ fn pos_within<T: Ord>(val: (T, T), lower: (T, T), upper: (T, T)) -> bool {
 fn check_cycle(
     obstacles: &Positions,
     grid: &Grid,
-    mut pos: Position,
-    mut dir: Position,
-    visited_so_far: &HashSet<(Position, Position)>,
+    mut pos: V2d,
+    mut dir: V2d,
+    visited_so_far: &HashSet<(V2d, V2d)>,
 ) -> bool {
     let mut visited = HashSet::new();
     visited.insert((pos, dir));
     while grid.is_inside(pos) {
-        let new_pos = (pos.0 + dir.0, pos.1 + dir.1);
+        let new_pos = V2d(pos.0 + dir.0, pos.1 + dir.1);
         if obstacles.contains(&new_pos) {
-            dir = (-dir.1, dir.0);
+            dir = V2d(-dir.1, dir.0);
             continue;
         }
         pos = new_pos;
@@ -49,7 +49,7 @@ pub fn f(input: AocInput) -> crate::AocResult {
         .copied()
         .unwrap();
     let mut obstacles = grid.locations.get(&'#').unwrap().clone();
-    let mut dir = (0, -1);
+    let mut dir = V2d(0, -1);
     let mut visited = HashSet::new();
     let mut visited_with_dir = HashSet::new();
     let mut used_obstacles = HashSet::new();
@@ -58,9 +58,9 @@ pub fn f(input: AocInput) -> crate::AocResult {
     visited_with_dir.insert((pos, dir));
 
     while grid.is_inside(pos) {
-        let new_pos = (pos.0 + dir.0, pos.1 + dir.1);
+        let new_pos = V2d(pos.0 + dir.0, pos.1 + dir.1);
         if obstacles.contains(&new_pos) {
-            dir = (-dir.1, dir.0);
+            dir = V2d(-dir.1, dir.0);
             continue;
         }
         if !used_obstacles.contains(&new_pos) {

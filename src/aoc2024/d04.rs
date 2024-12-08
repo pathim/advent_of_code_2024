@@ -27,7 +27,9 @@ fn find_dir(grid: &Grid, x: isize, y: isize) -> Vec<(isize, isize)> {
 pub fn f(input: AocInput) -> crate::AocResult {
     let mut res1 = 0;
     let grid = Grid::new(input, &['X', 'A']);
-    for (x, y) in grid.locations.get(&'X').unwrap().iter().copied() {
+    for loc in grid.locations.get(&'X').unwrap().iter().copied() {
+        let x = loc.0;
+        let y = loc.1;
         let dirs = find_dir(&grid, x, y);
         for (dx, dy) in dirs {
             if grid
@@ -46,7 +48,9 @@ pub fn f(input: AocInput) -> crate::AocResult {
 
     let mut res2 = 0;
 
-    for (x, y) in grid.locations.get(&'A').unwrap().iter().copied() {
+    for loc in grid.locations.get(&'A').unwrap().iter().copied() {
+        let x = loc.0;
+        let y = loc.1;
         let mut found = false;
         for dx in [-1, 1] {
             if let Some(c1) = grid.index_2d(x + dx, y + dx.abs()) {
