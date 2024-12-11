@@ -34,7 +34,6 @@ fn count_after(val: i64, n: usize, memo: &mut HashMap<(i64, usize), usize>) -> u
 }
 
 pub fn f(input: AocInput) -> crate::AocResult {
-    let mut res2 = 0;
     let line = input.lines().next().unwrap().unwrap();
     let values: Vec<_> = line
         .split_ascii_whitespace()

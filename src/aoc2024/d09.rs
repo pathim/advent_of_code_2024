@@ -29,7 +29,7 @@ impl Eq for Block {}
 
 impl PartialOrd for Block {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.id.partial_cmp(&other.id)
+        Some(self.cmp(other))
     }
 }
 
@@ -55,7 +55,7 @@ impl Eq for Space {}
 
 impl PartialOrd for Space {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.pos.partial_cmp(&other.pos)
+        Some(self.cmp(other))
     }
 }
 
@@ -65,14 +65,14 @@ impl Ord for Space {
     }
 }
 
-fn unpack(data: &Vec<(Option<usize>, usize)>) -> Vec<Option<usize>> {
+fn unpack(data: &[(Option<usize>, usize)]) -> Vec<Option<usize>> {
     data.iter()
         .flat_map(|(val, rep)| vec![val; *rep])
         .copied()
         .collect()
 }
 
-fn get_last(data: &mut Vec<Option<usize>>) -> (usize, usize) {
+fn get_last(data: &mut [Option<usize>]) -> (usize, usize) {
     let pos = data.iter().rposition(|x| x.is_some()).unwrap();
     let v = data[pos].take().unwrap();
     (pos, v)
