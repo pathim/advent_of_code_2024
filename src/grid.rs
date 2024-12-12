@@ -13,6 +13,15 @@ impl V2d {
     pub fn is_zero(self) -> bool {
         self.0 == 0 && self.1 == 0
     }
+
+    pub fn neighbors4(&self) -> [Self; 4] {
+        [
+            Self(self.0 - 1, self.1),
+            Self(self.0 + 1, self.1),
+            Self(self.0, self.1 - 1),
+            Self(self.0, self.1 + 1),
+        ]
+    }
 }
 
 impl Add for V2d {
