@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     fmt::Display,
-    ops::{Add, Div, Sub},
+    ops::{Add, Div, Mul, Rem, Sub},
 };
 
 use crate::AocInput;
@@ -20,6 +20,18 @@ impl V2d {
             Self(self.0 + 1, self.1),
             Self(self.0, self.1 - 1),
             Self(self.0, self.1 + 1),
+        ]
+    }
+    pub fn neighbors8(&self) -> [Self; 8] {
+        [
+            self + &Self(-1, -1),
+            self + &Self(-1, 0),
+            self + &Self(-1, 1),
+            self + &Self(0, -1),
+            self + &Self(0, 1),
+            self + &Self(1, -1),
+            self + &Self(1, 0),
+            self + &Self(1, 1),
         ]
     }
 }
@@ -45,6 +57,21 @@ impl Div<isize> for V2d {
         Self(self.0 / rhs, self.1 / rhs)
     }
 }
+impl Mul<isize> for V2d {
+    type Output = V2d;
+
+    fn mul(self, rhs: isize) -> Self::Output {
+        Self(self.0 * rhs, self.1 * rhs)
+    }
+}
+
+impl Rem<isize> for V2d {
+    type Output = Self;
+
+    fn rem(self, rhs: isize) -> Self::Output {
+        Self(self.0 % rhs, self.1 / rhs)
+    }
+}
 
 impl Add for &V2d {
     type Output = V2d;
@@ -65,6 +92,20 @@ impl Div<isize> for &V2d {
 
     fn div(self, rhs: isize) -> Self::Output {
         *self / rhs
+    }
+}
+impl Mul<isize> for &V2d {
+    type Output = V2d;
+
+    fn mul(self, rhs: isize) -> Self::Output {
+        *self * rhs
+    }
+}
+impl Rem<isize> for &V2d {
+    type Output = V2d;
+
+    fn rem(self, rhs: isize) -> Self::Output {
+        *self % rhs
     }
 }
 
