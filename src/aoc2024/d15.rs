@@ -1,7 +1,4 @@
-use crate::{
-    grid::{self, V2d},
-    AocInput, AocResult, Grid,
-};
+use crate::{grid::V2d, AocInput, AocResult, Grid};
 
 #[derive(Clone, Copy, Debug)]
 enum Dir {
@@ -30,41 +27,95 @@ impl Dir {
             Dir::Right => V2d(1, 0),
         }
     }
+
+    fn is_vertical(&self) -> bool {
+        match self {
+            Dir::Up => true,
+            Dir::Down => true,
+            Dir::Left => false,
+            Dir::Right => false,
+        }
+    }
 }
 
-fn move_on_grid(grid: &mut Grid, pos: V2d, dir: Dir) -> Option<V2d> {
+fn can_move(grid: &Grid, pos: V2d, dir: Dir) -> bool {
     let new_pos = pos + dir.as_v2d();
-    let pos_char = grid.index_2d(pos.0, pos.1).unwrap();
     let new_pos_char = grid.index_2d(new_pos.0, new_pos.1).unwrap();
-    if new_pos_char == '.' {
-        *grid.index_2d_mut(new_pos.0, new_pos.1).unwrap() = pos_char;
-        *grid.index_2d_mut(pos.0, pos.1).unwrap() = '.';
-        Some(new_pos)
-    } else if new_pos_char == '#' {
-        None
-    } else {
-        if let Some(p) = move_on_grid(grid, new_pos, dir) {
-            *grid.index_2d_mut(new_pos.0, new_pos.1).unwrap() = pos_char;
-            *grid.index_2d_mut(pos.0, pos.1).unwrap() = '.';
-            Some(new_pos)
-        } else {
-            None
+    match new_pos_char {
+        '.' => true,
+        '#' => false,
+        'O' => can_move(grid, new_pos, dir),
+        '[' => {
+            if dir.is_vertical() {
+                can_move(grid, new_pos, dir) && can_move(grid, new_pos + V2d(1, 0), dir)
+            } else {
+                can_move(grid, new_pos, dir)
+            }
         }
+        ']' => {
+            if dir.is_vertical() {
+                can_move(grid, new_pos, dir) && can_move(grid, new_pos + V2d(-1, 0), dir)
+            } else {
+                can_move(grid, new_pos, dir)
+            }
+        }
+        _ => panic!("Invalid char"),
+    }
+}
+
+fn do_move(grid: &mut Grid, pos: V2d, dir: Dir) {
+    let new_pos = pos + dir.as_v2d();
+    let new_pos_char = grid.index_2d(new_pos.0, new_pos.1).unwrap();
+    let pos_char = grid.index_2d(pos.0, pos.1).unwrap();
+    match new_pos_char {
+        '.' => {}
+        'O' => do_move(grid, new_pos, dir),
+        '[' => {
+            if dir.is_vertical() {
+                do_move(grid, new_pos, dir);
+                do_move(grid, new_pos + V2d(1, 0), dir);
+            } else {
+                do_move(grid, new_pos, dir);
+            }
+        }
+        ']' => {
+            if dir.is_vertical() {
+                do_move(grid, new_pos, dir);
+                do_move(grid, new_pos + V2d(-1, 0), dir);
+            } else {
+                do_move(grid, new_pos, dir);
+            }
+        }
+        _ => panic!("Invalid char"),
+    }
+    *grid.index_2d_mut(new_pos.0, new_pos.1).unwrap() = pos_char;
+    *grid.index_2d_mut(pos.0, pos.1).unwrap() = '.';
+}
+
+fn widen(c: char) -> [char; 2] {
+    match c {
+        '#' => ['#', '#'],
+        '.' => ['.', '.'],
+        '@' => ['@', '.'],
+        'O' => ['[', ']'],
+        _ => panic!("Invalid char"),
     }
 }
 
 pub fn f(input: AocInput) -> AocResult {
     let mut lines_iter = input.lines().map(|x| x.unwrap());
     let mut grid = Grid::new_empty();
+    let mut grid2 = Grid::new_empty();
 
     while let Some(l) = lines_iter.next() {
         if l.is_empty() {
             break;
         }
         grid.add_line(&l, &['@']);
+        grid2.add_line(&l.chars().flat_map(widen).collect::<String>(), &['@']);
     }
 
-    let mut pos = grid
+    let mut pos1 = grid
         .locations
         .get(&'@')
         .unwrap()
@@ -72,7 +123,14 @@ pub fn f(input: AocInput) -> AocResult {
         .next()
         .unwrap()
         .clone();
-    *grid.index_2d_mut(pos.0, pos.1).unwrap() = '.';
+    let mut pos2 = grid2
+        .locations
+        .get(&'@')
+        .unwrap()
+        .iter()
+        .next()
+        .unwrap()
+        .clone();
 
     let mut dirs = Vec::new();
     for l in lines_iter {
@@ -81,9 +139,14 @@ pub fn f(input: AocInput) -> AocResult {
         }
     }
 
-    for d in dirs {
-        if let Some(new_pos) = move_on_grid(&mut grid, pos, d) {
-            pos = new_pos;
+    for dir in dirs {
+        if can_move(&grid, pos1, dir) {
+            do_move(&mut grid, pos1, dir);
+            pos1 = pos1 + dir.as_v2d();
+        }
+        if can_move(&grid2, pos2, dir) {
+            do_move(&mut grid2, pos2, dir);
+            pos2 = pos2 + dir.as_v2d();
         }
     }
     let mut res1 = 0;
@@ -94,5 +157,13 @@ pub fn f(input: AocInput) -> AocResult {
             }
         }
     }
-    res1.into()
+    let mut res2 = 0;
+    for (y, l) in grid2.data.iter().enumerate() {
+        for (x, c) in l.iter().enumerate() {
+            if *c == '[' {
+                res2 += 100 * y + x;
+            }
+        }
+    }
+    (res1, res2).into()
 }
