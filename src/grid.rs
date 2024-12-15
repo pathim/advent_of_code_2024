@@ -114,9 +114,9 @@ pub type Positions = HashSet<Position>;
 
 #[derive(Clone, Debug)]
 pub struct Grid {
-    data: Vec<Vec<char>>,
+    pub data: Vec<Vec<char>>,
     pub locations: HashMap<char, Positions>,
-    size: (isize, isize),
+    pub size: (isize, isize),
     pub overlay: HashMap<char, Positions>,
 }
 
@@ -146,6 +146,33 @@ impl Grid {
             size,
             overlay: HashMap::new(),
         }
+    }
+
+    pub fn new_empty() -> Self {
+        Self {
+            data: Vec::new(),
+            locations: HashMap::new(),
+            size: (0, 0),
+            overlay: HashMap::new(),
+        }
+    }
+
+    pub fn add_line(&mut self, line: &str, needles: &[char]) {
+        let y = self.data.len();
+        let mut res_line = Vec::new();
+        for (x, c) in line.chars().enumerate() {
+            if needles.contains(&c) {
+                self.locations
+                    .entry(c)
+                    .or_default()
+                    .insert(V2d(x as isize, y as isize));
+            }
+            res_line.push(c);
+        }
+        self.data.push(res_line);
+        let height = self.data.len() as isize;
+        let width = self.data.first().unwrap().len() as isize;
+        self.size = (width, height);
     }
 
     pub fn index_2d(&self, x: isize, y: isize) -> Option<char> {
