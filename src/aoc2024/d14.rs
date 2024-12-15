@@ -45,22 +45,23 @@ fn get_quadrant(p: &V2d, width: isize, height: isize) -> Option<usize> {
     })
 }
 
-fn show_robots<'a, T: IntoIterator<Item = &'a V2d>>(robots: T, width: isize, height: isize) {
-    let mut grid = vec![vec!['.'; width as usize]; height as usize];
-    for r in robots {
-        let c = &mut grid[r.1 as usize][r.0 as usize];
-        if *c == '.' {
-            *c = '1';
-        } else {
-            *c = char::from_u32(*c as u32 + 1).unwrap();
+fn count_one_area(robots: &mut HashSet<V2d>, start: V2d) -> usize {
+    let mut res = 0;
+    if robots.remove(&start) {
+        res = 1;
+        for n in start.neighbors8() {
+            res += count_one_area(robots, n);
         }
     }
-    for l in grid {
-        for c in l {
-            print!("{}", c);
-        }
-        println!()
+    res
+}
+
+fn count_area(mut robots: HashSet<V2d>) -> Vec<usize> {
+    let mut res = Vec::new();
+    while let Some(current) = robots.iter().copied().next() {
+        res.push(count_one_area(&mut robots, current.clone()));
     }
+    res
 }
 pub fn f(input: AocInput) -> AocResult {
     const WIDTH: isize = 101;
@@ -80,32 +81,19 @@ pub fn f(input: AocInput) -> AocResult {
     }
     let res1 = quadrants.iter().fold(1, |a, b| a * b);
 
-    let mut n = 3589;
-    let res2 = loop {
-        let mut quadrants = [0; 4];
-        let mut middle = 0;
+    let mut max_area = 0;
+    let mut max_n = 0;
+    for n in 0..HEIGHT * WIDTH {
         let new_r = robots
             .iter()
             .map(|r| r.wrapped_pos_after(WIDTH, HEIGHT, n))
             .collect::<HashSet<_>>();
-        for pos in new_r.iter() {
-            if let Some(q) = get_quadrant(&pos, WIDTH, HEIGHT) {
-                quadrants[q] += 1
-            } else {
-                middle += 1;
-            }
+        let new_max = count_area(new_r).iter().max().unwrap().clone();
+        if new_max > max_area {
+            max_area = new_max;
+            max_n = n;
         }
+    }
 
-        if quadrants[0] == quadrants[2]
-            && quadrants[1] == quadrants[3]
-            && new_r.contains(&V2d(WIDTH / 2, 0))
-        {
-            show_robots(&new_r, WIDTH, HEIGHT);
-            println!("{}", n);
-            break n;
-        }
-        n += 1;
-    };
-
-    (res1, res2).into()
+    (res1, max_n).into()
 }
