@@ -59,7 +59,7 @@ fn count_one_area(robots: &mut HashSet<V2d>, start: V2d) -> usize {
 fn count_area(mut robots: HashSet<V2d>) -> Vec<usize> {
     let mut res = Vec::new();
     while let Some(current) = robots.iter().copied().next() {
-        res.push(count_one_area(&mut robots, current.clone()));
+        res.push(count_one_area(&mut robots, current));
     }
     res
 }
@@ -79,7 +79,7 @@ pub fn f(input: AocInput) -> AocResult {
             quadrants[q] += 1
         }
     }
-    let res1 = quadrants.iter().fold(1, |a, b| a * b);
+    let res1 = quadrants.iter().product::<i32>();
 
     let mut max_area = 0;
     let mut max_n = 0;
@@ -88,7 +88,7 @@ pub fn f(input: AocInput) -> AocResult {
             .iter()
             .map(|r| r.wrapped_pos_after(WIDTH, HEIGHT, n))
             .collect::<HashSet<_>>();
-        let new_max = count_area(new_r).iter().max().unwrap().clone();
+        let new_max = *count_area(new_r).iter().max().unwrap();
         if new_max > max_area {
             max_area = new_max;
             max_n = n;
