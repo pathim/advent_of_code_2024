@@ -80,19 +80,15 @@ pub fn f(input: AocInput) -> AocResult {
     let mut res2 = 0;
     for mut m in machines {
         if let Some((a, b)) = m.solve() {
-            if m.check(a, b) {
-                if a <= 100 && b <= 100 && a >= 0 && b >= 0 {
-                    res1 += 3 * a + b;
-                }
+            if m.check(a, b) && a <= 100 && b <= 100 && a >= 0 && b >= 0 {
+                res1 += 3 * a + b;
             }
         }
         m.x += 10000000000000;
         m.y += 10000000000000;
         if let Some((a, b)) = m.solve() {
-            if m.check(a, b) {
-                if a >= 0 && b >= 0 {
-                    res2 += 3 * a + b;
-                }
+            if m.check(a, b) && a >= 0 && b >= 0 {
+                res2 += 3 * a + b;
             }
         }
     }
