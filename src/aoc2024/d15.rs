@@ -107,7 +107,7 @@ pub fn f(input: AocInput) -> AocResult {
     let mut grid = Grid::new_empty();
     let mut grid2 = Grid::new_empty();
 
-    while let Some(l) = lines_iter.next() {
+    for l in lines_iter.by_ref() {
         if l.is_empty() {
             break;
         }
@@ -115,22 +115,8 @@ pub fn f(input: AocInput) -> AocResult {
         grid2.add_line(&l.chars().flat_map(widen).collect::<String>(), &['@']);
     }
 
-    let mut pos1 = grid
-        .locations
-        .get(&'@')
-        .unwrap()
-        .iter()
-        .next()
-        .unwrap()
-        .clone();
-    let mut pos2 = grid2
-        .locations
-        .get(&'@')
-        .unwrap()
-        .iter()
-        .next()
-        .unwrap()
-        .clone();
+    let mut pos1 = *grid.locations.get(&'@').unwrap().iter().next().unwrap();
+    let mut pos2 = *grid2.locations.get(&'@').unwrap().iter().next().unwrap();
 
     let mut dirs = Vec::new();
     for l in lines_iter {
