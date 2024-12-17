@@ -69,6 +69,36 @@ impl<'a> Machine<'a> {
     }
 }
 
+fn next_a(prog: &Vec<u8>, start_a: u64, target: u64) -> Vec<u64> {
+    let mut res = Vec::new();
+    for i in 0..8 {
+        let a = (start_a << 3) | i;
+        let mut machine = Machine::new(prog, [a, 0, 0]);
+        while machine.running {
+            if let Some(out) = machine.step() {
+                if out == target {
+                    res.push(a);
+                }
+                break;
+            }
+        }
+    }
+    res
+}
+
+fn find_a(prog: &Vec<u8>, start_a: u64, n: usize) -> Option<u64> {
+    let a_cand = next_a(prog, start_a, prog[n] as u64);
+    if n == 0 {
+        return a_cand.first().copied();
+    }
+    for a in a_cand {
+        if let Some(r) = find_a(prog, a, n - 1) {
+            return Some(r);
+        }
+    }
+    None
+}
+
 pub fn f(input: AocInput) -> AocResult {
     let mut lines_iter = input.lines();
     let a: u64 = lines_iter
@@ -128,5 +158,7 @@ pub fn f(input: AocInput) -> AocResult {
         .collect::<Vec<_>>()
         .join(",");
 
-    res1.into()
+    let res2 = find_a(&program, 0, program.len() - 1).unwrap();
+
+    (res1, res2).into()
 }
