@@ -1,4 +1,4 @@
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use crate::{grid::V2d, AocInput, AocResult, Grid};
 
@@ -74,6 +74,7 @@ impl MazePos {
 struct CostPos {
     pos: MazePos,
     cost: i64,
+    path: Vec<V2d>,
 }
 
 impl CostPos {
@@ -82,6 +83,7 @@ impl CostPos {
         std::array::from_fn(|i| Self {
             pos: n[i].0,
             cost: self.cost + n[i].1,
+            path: self.path.clone(),
         })
     }
 }
@@ -111,24 +113,38 @@ pub fn f(input: AocInput) -> AocResult {
     let startpos = CostPos {
         pos: start,
         cost: 0,
+        path: vec![start.pos],
     };
     costs.insert(start, 0);
     lowest_costs.push(startpos);
+    let mut shortest_paths = Vec::new();
+    let mut min_cost = i64::MAX;
     let res1 = loop {
         let current = lowest_costs.pop().unwrap();
-        if current.pos.pos == end {
-            break current.cost;
+        if current.cost > min_cost {
+            break min_cost;
         }
-        for n in current.neighbors() {
+        if current.pos.pos == end {
+            min_cost = current.cost;
+            shortest_paths.push(current.path);
+            continue;
+        }
+        for mut n in current.neighbors() {
             if grid.index_2d(n.pos.pos.0, n.pos.pos.1).unwrap() == '#' {
                 continue;
             }
             let c = costs.entry(n.pos).or_insert(i64::MAX);
-            if n.cost < *c {
+            if n.cost <= *c {
                 *c = n.cost;
+                n.path.push(n.pos.pos);
                 lowest_costs.push(n);
             }
         }
     };
-    res1.into()
+    let mut path_tiles = HashSet::new();
+    for p in shortest_paths {
+        path_tiles.extend(p.into_iter());
+    }
+    let res2 = path_tiles.len();
+    (res1, res2).into()
 }
