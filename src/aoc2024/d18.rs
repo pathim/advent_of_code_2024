@@ -74,13 +74,17 @@ pub fn f(input: AocInput) -> AocResult {
     }
 
     let res1 = find_path(&obstacles, 1024).unwrap();
-    let mut res2 = V2d(0, 0);
-    for limit in 1025.. {
+    let mut high = obstacles.len();
+    let mut low = 1025;
+    while high != low + 1 {
+        let limit = (high + low) / 2;
         if find_path(&obstacles, limit).is_none() {
-            res2 = *obstacles.iter().find(|(_, v)| **v == limit).unwrap().0;
-            break;
+            high = limit;
+        } else {
+            low = limit;
         }
     }
+    let res2 = *obstacles.iter().find(|(_, v)| **v == high).unwrap().0;
     let res2 = format!("{},{}", res2.0, res2.1);
     (res1, res2).into()
 }
