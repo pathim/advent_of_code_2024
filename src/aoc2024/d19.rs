@@ -2,26 +2,20 @@ use std::collections::HashMap;
 
 use crate::{AocInput, AocResult};
 
-fn count_matches(
-    pattern: &str,
-    towels: &[String],
-    cache: &mut HashMap<(String, usize), usize>,
-) -> usize {
+fn count_matches(pattern: &str, towels: &[String], cache: &mut HashMap<usize, usize>) -> usize {
     if pattern.is_empty() {
         return 1;
+    }
+    if let Some(count) = cache.get(&pattern.len()) {
+        return *count;
     }
     let mut res = 0;
     for t in towels {
         if pattern.starts_with(t) {
-            res += if let Some(count) = cache.get(&(t.clone(), pattern.len())) {
-                *count
-            } else {
-                let count = count_matches(&pattern[t.len()..], towels, cache);
-                cache.insert((t.clone(), pattern.len()), count);
-                count
-            };
+            res += count_matches(&pattern[t.len()..], towels, cache);
         }
     }
+    cache.insert(pattern.len(), res);
     res
 }
 
