@@ -36,16 +36,7 @@ fn is_inside(pos: V2d) -> bool {
     pos.0 >= 0 && pos.1 < SIZE && pos.1 >= 0 && pos.0 < SIZE
 }
 
-pub fn f(input: AocInput) -> AocResult {
-    let mut obstacles = HashMap::new();
-    for (i, l) in input.lines().enumerate() {
-        let l = l.unwrap();
-        let (x, y) = l.split_once(',').unwrap();
-        let x: isize = x.parse().unwrap();
-        let y: isize = y.parse().unwrap();
-        obstacles.insert(V2d(x, y), i);
-    }
-
+fn find_path(obstacles: &HashMap<V2d, usize>, limit: usize) -> Option<i64> {
     let start = V2d(0, 0);
     let target = V2d(70, 70);
 
@@ -55,23 +46,41 @@ pub fn f(input: AocInput) -> AocResult {
         pos: start,
         cost: 0,
     });
-
-    let res1 =
-        loop {
-            let pos = shortest.pop().unwrap();
-            if pos.pos == target {
-                break pos.cost;
+    while let Some(pos) = shortest.pop() {
+        if pos.pos == target {
+            return Some(pos.cost);
+        }
+        for n in pos.neighbors().into_iter().filter(|p| {
+            is_inside(p.pos) && obstacles.get(&p.pos).copied().unwrap_or(usize::MAX) > limit
+        }) {
+            let c = costs.entry(n.pos).or_insert(i64::MAX);
+            if *c > n.cost {
+                *c = n.cost;
+                shortest.push(n);
             }
-            for n in pos.neighbors().into_iter().filter(|p| {
-                is_inside(p.pos) && obstacles.get(&p.pos).copied().unwrap_or(2000) >= 1024
-            }) {
-                let c = costs.entry(n.pos).or_insert(i64::MAX);
-                if *c > n.cost {
-                    *c = n.cost;
-                    shortest.push(n);
-                }
-            }
-        };
+        }
+    }
+    None
+}
 
-    res1.into()
+pub fn f(input: AocInput) -> AocResult {
+    let mut obstacles = HashMap::new();
+    for (i, l) in input.lines().enumerate() {
+        let l = l.unwrap();
+        let (x, y) = l.split_once(',').unwrap();
+        let x: isize = x.parse().unwrap();
+        let y: isize = y.parse().unwrap();
+        obstacles.insert(V2d(x, y), i + 1);
+    }
+
+    let res1 = find_path(&obstacles, 1024).unwrap();
+    let mut res2 = V2d(0, 0);
+    for limit in 1025.. {
+        if find_path(&obstacles, limit).is_none() {
+            res2 = *obstacles.iter().find(|(_, v)| **v == limit).unwrap().0;
+            break;
+        }
+    }
+    let res2 = format!("{},{}", res2.0, res2.1);
+    (res1, res2).into()
 }
