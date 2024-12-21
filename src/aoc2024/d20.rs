@@ -1,3 +1,5 @@
+// TODO: Optimize. Save uncheated distance of each path element to end. Find cheated length by finding differece of sufficiently close tiles.
+
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use crate::{grid::V2d, AocInput, AocResult, Grid};
