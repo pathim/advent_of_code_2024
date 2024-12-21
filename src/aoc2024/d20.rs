@@ -37,7 +37,6 @@ impl Pos {
 struct CostPos {
     pos: Pos,
     cost: i64,
-    path: Vec<Pos>,
 }
 
 impl CostPos {
@@ -45,14 +44,9 @@ impl CostPos {
         self.pos
             .get_neighbors(grid)
             .into_iter()
-            .map(|n| {
-                let mut path = self.path.clone();
-                //path.push(n.clone());
-                Self {
-                    pos: n,
-                    cost: self.cost + 1,
-                    path,
-                }
+            .map(|n| Self {
+                pos: n,
+                cost: self.cost + 1,
             })
             .collect()
     }
@@ -91,7 +85,6 @@ pub fn f(input: AocInput) -> AocResult {
     shortest.push(CostPos {
         pos: baseline_start.clone(),
         cost: 0,
-        path: Vec::new(),
     });
     costs.insert(baseline_start, 0);
     let mut used_cheats = HashSet::new();
@@ -109,14 +102,8 @@ pub fn f(input: AocInput) -> AocResult {
             if let Some(cheat) = p.pos.used_cheat {
                 used_cheats.insert(cheat);
             }
-            println!("found {}, {:?}", p.cost, p.pos.used_cheat);
-            let path = p.path.iter().map(|x| x.coords).collect();
-            grid.overlay.remove(&'O');
-            grid.overlay.insert('O', path);
-            //println!("{}",grid);
             if (p.cost as usize) <= baseline - 100 {
                 res1 += 1;
-                //costs.clear();
                 continue;
             } else {
                 break;
