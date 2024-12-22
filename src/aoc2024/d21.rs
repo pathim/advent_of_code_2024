@@ -10,7 +10,7 @@ fn create_dirmap() -> HashMap<(char, char), Vec<char>> {
     base.insert(('A', 'v'), vec!['<', 'v', 'A']);
 
     base.insert(('^', 'v'), vec!['v', 'A']);
-    base.insert(('^', '<'), vec!['<', 'v', 'A']);
+    base.insert(('^', '<'), vec!['v', '<', 'A']);
     base.insert(('^', '>'), vec!['v', '>', 'A']);
 
     base.insert(('v', '<'), vec!['<', 'A']);
@@ -57,13 +57,13 @@ fn create_num_dirmap() -> HashMap<(char, char), Vec<char>> {
 
     base.insert(('0', '1'), vec!['^', '<', 'A']);
     base.insert(('0', '2'), vec!['^', 'A']);
-    base.insert(('0', '3'), vec!['>', '^', 'A']);
+    base.insert(('0', '3'), vec!['^', '>', 'A']);
     base.insert(('0', '4'), vec!['^', '^', '<', 'A']);
     base.insert(('0', '5'), vec!['^', '^', 'A']);
-    base.insert(('0', '6'), vec!['>', '^', '^', 'A']);
+    base.insert(('0', '6'), vec!['^', '^', '>', 'A']);
     base.insert(('0', '7'), vec!['^', '^', '^', '<', 'A']);
     base.insert(('0', '8'), vec!['^', '^', '^', 'A']);
-    base.insert(('0', '9'), vec!['>', '^', '^', '^', 'A']);
+    base.insert(('0', '9'), vec!['^', '^', '^', '>', 'A']);
 
     base.insert(('1', '2'), vec!['>', 'A']);
     base.insert(('1', '3'), vec!['>', '>', 'A']);
@@ -134,35 +134,28 @@ fn create_num_dirmap() -> HashMap<(char, char), Vec<char>> {
     res
 }
 
-fn map_dirs(prev: char, c: char, dirmap: &HashMap<(char, char), Vec<char>>) -> Vec<char> {
-    if prev == c {
-        return vec!['A'];
-    }
-    match (prev, c) {
-        ('A', '<') => vec!['<', 'v', '<', 'A'],
-        ('A', '>') => vec!['v', 'A'],
-        ('A', '^') => vec!['<', 'A'],
-        ('A', 'v') => vec!['<', 'v', 'A'],
-        ('^', 'v') => vec!['<', 'v', 'A'],
-        _ => panic!("Invalid direction: {} -> {}", prev, c),
-    }
-}
-fn push_direction(dir: &[char], depth: u64, dirmap: &HashMap<(char, char), Vec<char>>) -> usize {
-    println!("Depth: {}", depth);
-    for x in dir {
-        print!("{}", x);
-    }
-    println!();
+fn push_direction(
+    src: char,
+    dst: char,
+    depth: u8,
+    dirmap: &HashMap<(char, char), Vec<char>>,
+    cache: &mut HashMap<(char, char, u8), u64>,
+) -> u64 {
     if depth == 0 {
-        return dir.len();
+        return 1;
+    }
+    let k = (src, dst, depth);
+    if let Some(r) = cache.get(&k) {
+        return *r;
     }
     let mut prev = 'A';
-    let mut new_dirs = Vec::new();
-    for c in dir {
-        new_dirs.extend(dirmap.get(&(prev, *c)).unwrap());
+    let mut res = 0;
+    for c in dirmap.get(&(src, dst)).unwrap() {
+        res += push_direction(prev, *c, depth - 1, dirmap, cache);
         prev = *c;
     }
-    push_direction(&new_dirs, depth - 1, dirmap)
+    cache.insert(k, res);
+    res
 }
 
 pub fn f(input: AocInput) -> AocResult {
@@ -170,23 +163,31 @@ pub fn f(input: AocInput) -> AocResult {
     let dirmap = create_dirmap();
 
     let mut res1 = 0;
+    let mut res2 = 0;
+    let mut cache = HashMap::new();
     for l in input.lines() {
         let l = l.unwrap();
-        let mut d: Vec<char> = Vec::new();
+        let mut min_presses1 = 0;
+        let mut min_presses2 = 0;
         let mut prev = 'A';
         let mut val = 0;
         for c in l.chars() {
-            d.extend(num_dirmap.get(&(prev, c)).unwrap());
+            let d = num_dirmap.get(&(prev, c)).unwrap();
+            let mut pprev = 'A';
+            for cc in d {
+                min_presses1 += push_direction(pprev, *cc, 2, &dirmap, &mut cache);
+                min_presses2 += push_direction(pprev, *cc, 25, &dirmap, &mut cache);
+                pprev = *cc;
+            }
             prev = c;
             if c != 'A' {
                 val *= 10;
-                val += c.to_digit(10).unwrap() as usize;
+                val += c.to_digit(10).unwrap() as u64;
             }
         }
-        let l = push_direction(&d, 2, &dirmap);
-        println!("val:{}, l:{}", val, l);
-        res1 += val * l;
+        res1 += val * min_presses1;
+        res2 += val * min_presses2;
     }
 
-    res1.into()
+    (res1, res2).into()
 }
