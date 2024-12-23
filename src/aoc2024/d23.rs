@@ -2,41 +2,26 @@ use std::collections::{HashMap, HashSet};
 
 use crate::{AocInput, AocResult};
 
-#[derive(PartialEq, Eq, Hash, Clone, Debug)]
-struct Clique {
-    members: Vec<String>,
-}
-
-impl Clique {
-    fn new(initial: String) -> Self {
-        Self {
-            members: vec![initial],
-        }
+fn larger(members: &[String], connections: &HashMap<String, HashSet<String>>) -> Vec<Vec<String>> {
+    let mut new_members = connections
+        .get(members.iter().next().unwrap())
+        .unwrap()
+        .clone();
+    for m in members {
+        new_members = new_members
+            .intersection(connections.get(m).unwrap())
+            .cloned()
+            .collect::<HashSet<_>>();
     }
+    let mut res = Vec::new();
 
-    fn larger(&self, connections: &HashMap<String, HashSet<String>>) -> Vec<Self> {
-        let mut new_members = connections
-            .get(self.members.iter().next().unwrap())
-            .unwrap()
-            .clone();
-        for m in &self.members {
-            new_members = new_members
-                .intersection(connections.get(m).unwrap())
-                .cloned()
-                .collect::<HashSet<_>>();
-        }
-        let mut res = Vec::new();
-
-        for n in new_members {
-            let mut new_clique = Self {
-                members: self.members.clone(),
-            };
-            new_clique.members.push(n);
-            new_clique.members.sort();
-            res.push(new_clique);
-        }
-        res
+    for n in new_members {
+        let mut new_clique = members.to_vec();
+        new_clique.push(n);
+        new_clique.sort();
+        res.push(new_clique);
     }
+    res
 }
 
 fn add_connection(c1: &str, c2: &str, connections: &mut HashMap<String, HashSet<String>>) {
@@ -64,12 +49,12 @@ pub fn f(input: AocInput) -> AocResult {
     }
 
     let mut current_cliques = HashSet::new();
-    current_cliques.extend(connections.keys().map(|s| Clique::new(s.to_owned())));
+    current_cliques.extend(cliques.iter().map(|x| x.to_vec()));
 
     let largest = loop {
         let mut next_cliques = HashSet::new();
         for c in current_cliques {
-            next_cliques.extend(c.larger(&connections));
+            next_cliques.extend(larger(&c, &connections));
         }
         if next_cliques.len() == 1 {
             break next_cliques.iter().cloned().next().unwrap();
@@ -87,6 +72,6 @@ pub fn f(input: AocInput) -> AocResult {
         }
     }
 
-    let res2 = largest.members.join(",");
+    let res2 = largest.join(",");
     (res1, res2).into()
 }
