@@ -189,6 +189,17 @@ impl Grid {
     pub fn is_inside(&self, pos: Position) -> bool {
         pos.0 >= 0 && pos.0 < self.size.0 && pos.1 >= 0 && pos.1 < self.size.1
     }
+
+    pub fn get(&self, pos: V2d) -> Option<char> {
+        self.index_2d(pos.0, pos.1)
+    }
+    pub fn get_mut(&mut self, pos: V2d) -> Option<&mut char> {
+        self.index_2d_mut(pos.0, pos.1)
+    }
+
+    pub fn is_char(&self, pos: V2d, c: char) -> bool {
+        self.get(pos).map(|x| x == c).unwrap_or(false)
+    }
 }
 
 impl Display for Grid {
