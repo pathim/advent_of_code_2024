@@ -12,6 +12,28 @@ fn neighbors_manhattan(pos: V2d, dist: isize) -> Vec<V2d> {
     res
 }
 
+fn dist_manhattan(p1: V2d, p2: V2d) -> isize {
+    let delta = p1 - p2;
+    delta.0.abs() + delta.1.abs()
+}
+
+fn find_cheats(grid: &Grid, distances: &HashMap<V2d, isize>, dist: isize) -> usize {
+    let mut cheats = HashSet::new();
+
+    for (cheat_start, d) in distances {
+        for cheat_end in neighbors_manhattan(*cheat_start, dist) {
+            if !grid.is_char(cheat_end, '.') {
+                continue;
+            }
+            let delta = d - distances.get(&cheat_end).unwrap();
+            if delta - dist_manhattan(*cheat_start, cheat_end) >= 100 {
+                cheats.insert((cheat_start, cheat_end));
+            }
+        }
+    }
+    cheats.len()
+}
+
 pub fn f(input: AocInput) -> AocResult {
     let mut grid = Grid::new(input, &['S', 'E']);
     let start = *grid
@@ -44,21 +66,9 @@ pub fn f(input: AocInput) -> AocResult {
         }
     }
 
-    let mut cheats = HashSet::new();
+    let res1 = find_cheats(&grid, &distances, 2);
 
-    for (cheat_start, d) in &distances {
-        for cheat_end in neighbors_manhattan(*cheat_start, 2) {
-            if !grid.is_char(cheat_end, '.') {
-                continue;
-            }
-            let delta = d - distances.get(&cheat_end).unwrap();
-            if delta > 100 {
-                cheats.insert((cheat_start, cheat_end));
-            }
-        }
-    }
+    let res2 = find_cheats(&grid, &distances, 20);
 
-    let res1 = cheats.len();
-
-    res1.into()
+    (res1, res2).into()
 }
