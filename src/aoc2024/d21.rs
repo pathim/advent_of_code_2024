@@ -1,145 +1,82 @@
-use std::collections::HashMap;
+use std::collections::{BinaryHeap, HashMap};
 
-use crate::{AocInput, AocResult};
+use crate::{grid::V2d, AocInput, AocResult};
 
-fn create_dirmap() -> HashMap<(char, char), Vec<char>> {
-    let mut base = HashMap::new();
-    base.insert(('A', '<'), vec!['v', '<', '<', 'A']);
-    base.insert(('A', '>'), vec!['v', 'A']);
-    base.insert(('A', '^'), vec!['<', 'A']);
-    base.insert(('A', 'v'), vec!['<', 'v', 'A']);
-
-    base.insert(('^', 'v'), vec!['v', 'A']);
-    base.insert(('^', '<'), vec!['v', '<', 'A']);
-    base.insert(('^', '>'), vec!['v', '>', 'A']);
-
-    base.insert(('v', '<'), vec!['<', 'A']);
-    base.insert(('v', '>'), vec!['>', 'A']);
-
-    base.insert(('<', '>'), vec!['>', '>', 'A']);
-
+fn create_dir_keypad() -> (HashMap<V2d, char>, HashMap<char, V2d>) {
     let mut res = HashMap::new();
-    for ((p, c), v) in base {
-        let rev = v
-            .iter()
-            .rev()
-            .skip(1)
-            .map(|c| match c {
-                '<' => '>',
-                '>' => '<',
-                '^' => 'v',
-                'v' => '^',
-                _ => panic!("Invalid direction: {}", c),
-            })
-            .chain(['A'])
-            .collect();
-        res.insert((c, p), rev);
-        res.insert((p, c), v);
+    let mut res_inv = HashMap::new();
+
+    res.insert(V2d(1, 0), '^');
+    res.insert(V2d(2, 0), 'A');
+    res.insert(V2d(0, 1), '<');
+    res.insert(V2d(1, 1), 'v');
+    res.insert(V2d(2, 1), '>');
+
+    for (k, v) in &res {
+        res_inv.insert(*v, *k);
     }
-    for c in ['A', '<', '>', '^', 'v'] {
-        res.insert((c, c), vec!['A']);
-    }
-    res
+
+    (res, res_inv)
 }
 
-fn create_num_dirmap() -> HashMap<(char, char), Vec<char>> {
-    let mut base = HashMap::new();
-    base.insert(('A', '0'), vec!['<', 'A']);
-    base.insert(('A', '1'), vec!['^', '<', '<', 'A']);
-    base.insert(('A', '2'), vec!['<', '^', 'A']);
-    base.insert(('A', '3'), vec!['^', 'A']);
-    base.insert(('A', '4'), vec!['^', '^', '<', '<', 'A']);
-    base.insert(('A', '5'), vec!['<', '^', '^', 'A']);
-    base.insert(('A', '6'), vec!['^', '^', 'A']);
-    base.insert(('A', '7'), vec!['^', '^', '^', '<', '<', 'A']);
-    base.insert(('A', '8'), vec!['<', '^', '^', '^', 'A']);
-    base.insert(('A', '9'), vec!['^', '^', '^', 'A']);
-
-    base.insert(('0', '1'), vec!['^', '<', 'A']);
-    base.insert(('0', '2'), vec!['^', 'A']);
-    base.insert(('0', '3'), vec!['^', '>', 'A']);
-    base.insert(('0', '4'), vec!['^', '^', '<', 'A']);
-    base.insert(('0', '5'), vec!['^', '^', 'A']);
-    base.insert(('0', '6'), vec!['^', '^', '>', 'A']);
-    base.insert(('0', '7'), vec!['^', '^', '^', '<', 'A']);
-    base.insert(('0', '8'), vec!['^', '^', '^', 'A']);
-    base.insert(('0', '9'), vec!['^', '^', '^', '>', 'A']);
-
-    base.insert(('1', '2'), vec!['>', 'A']);
-    base.insert(('1', '3'), vec!['>', '>', 'A']);
-    base.insert(('1', '4'), vec!['^', 'A']);
-    base.insert(('1', '5'), vec!['>', '^', 'A']);
-    base.insert(('1', '6'), vec!['>', '>', '^', 'A']);
-    base.insert(('1', '7'), vec!['^', '^', 'A']);
-    base.insert(('1', '8'), vec!['>', '^', '^', 'A']);
-    base.insert(('1', '9'), vec!['>', '>', '^', '^', 'A']);
-
-    base.insert(('2', '3'), vec!['>', 'A']);
-    base.insert(('2', '4'), vec!['<', '^', 'A']);
-    base.insert(('2', '5'), vec!['^', 'A']);
-    base.insert(('2', '6'), vec!['>', '^', 'A']);
-    base.insert(('2', '7'), vec!['<', '^', '^', 'A']);
-    base.insert(('2', '8'), vec!['^', '^', 'A']);
-    base.insert(('2', '9'), vec!['>', '^', '^', 'A']);
-
-    base.insert(('3', '4'), vec!['<', '<', '^', 'A']);
-    base.insert(('3', '5'), vec!['<', '^', 'A']);
-    base.insert(('3', '6'), vec!['^', 'A']);
-    base.insert(('3', '7'), vec!['<', '<', '^', '^', 'A']);
-    base.insert(('3', '8'), vec!['<', '^', '^', 'A']);
-    base.insert(('3', '9'), vec!['^', '^', 'A']);
-
-    base.insert(('4', '5'), vec!['>', 'A']);
-    base.insert(('4', '6'), vec!['>', '>', 'A']);
-    base.insert(('4', '7'), vec!['^', 'A']);
-    base.insert(('4', '8'), vec!['>', '^', 'A']);
-    base.insert(('4', '9'), vec!['>', '>', '^', 'A']);
-
-    base.insert(('5', '6'), vec!['>', 'A']);
-    base.insert(('5', '7'), vec!['<', '^', 'A']);
-    base.insert(('5', '8'), vec!['^', 'A']);
-    base.insert(('5', '9'), vec!['>', '^', 'A']);
-
-    base.insert(('6', '7'), vec!['<', '<', '^', 'A']);
-    base.insert(('6', '8'), vec!['<', '^', 'A']);
-    base.insert(('6', '9'), vec!['^', 'A']);
-
-    base.insert(('7', '8'), vec!['>', 'A']);
-    base.insert(('7', '9'), vec!['>', '>', 'A']);
-
-    base.insert(('8', '9'), vec!['>', 'A']);
-
+fn create_num_keypad() -> (HashMap<V2d, char>, HashMap<char, V2d>) {
     let mut res = HashMap::new();
-    for ((p, c), v) in base {
-        let rev = v
-            .iter()
-            .rev()
-            .skip(1)
-            .map(|c| match c {
-                '<' => '>',
-                '>' => '<',
-                '^' => 'v',
-                'v' => '^',
-                _ => panic!("Invalid direction: {}", c),
-            })
-            .chain(['A'])
-            .collect();
-        res.insert((c, p), rev);
-        res.insert((p, c), v);
+    let mut res_inv = HashMap::new();
+
+    res.insert(V2d(0, 0), '7');
+    res.insert(V2d(1, 0), '8');
+    res.insert(V2d(2, 0), '9');
+    res.insert(V2d(0, 1), '4');
+    res.insert(V2d(1, 1), '5');
+    res.insert(V2d(2, 1), '6');
+    res.insert(V2d(0, 2), '1');
+    res.insert(V2d(1, 2), '2');
+    res.insert(V2d(2, 2), '3');
+    res.insert(V2d(1, 3), '0');
+    res.insert(V2d(2, 3), 'A');
+
+    for (k, v) in &res {
+        res_inv.insert(*v, *k);
     }
-    for c in '0'..='9' {
-        res.insert((c, c), vec!['A']);
+
+    (res, res_inv)
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct CostPos {
+    pos: V2d,
+    cost: u64,
+    path: Vec<char>,
+}
+
+impl PartialOrd for CostPos {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
-    res.insert(('A', 'A'), vec!['A']);
-    res
+}
+
+impl Ord for CostPos {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+fn delta2dir(delta: V2d) -> char {
+    match delta {
+        V2d(0, 1) => 'v',
+        V2d(0, -1) => '^',
+        V2d(1, 0) => '>',
+        V2d(-1, 0) => '<',
+        _ => panic!("invalid direction"),
+    }
 }
 
 fn push_direction(
     src: char,
     dst: char,
     depth: u8,
-    dirmap: &HashMap<(char, char), Vec<char>>,
     cache: &mut HashMap<(char, char, u8), u64>,
+    keypad: &dyn Fn() -> (HashMap<V2d, char>, HashMap<char, V2d>),
 ) -> u64 {
     if depth == 0 {
         return 1;
@@ -148,23 +85,73 @@ fn push_direction(
     if let Some(r) = cache.get(&k) {
         return *r;
     }
-    let mut prev = 'A';
-    let mut res = 0;
-    for c in dirmap.get(&(src, dst)).unwrap() {
-        res += push_direction(prev, *c, depth - 1, dirmap, cache);
-        prev = *c;
+    let (pos2key, key2pos) = keypad();
+    let mut paths = HashMap::new();
+    let mut shortest_path = BinaryHeap::new();
+    let pos = *key2pos.get(&src).unwrap();
+    let target = *key2pos.get(&dst).unwrap();
+    shortest_path.push(CostPos {
+        pos,
+        cost: 0,
+        path: vec!['A'],
+    });
+    while let Some(p) = shortest_path.pop() {
+        if p.pos == V2d(-1, -1) {
+            cache.insert(k, p.cost);
+            return p.cost;
+        }
+        if p.pos == target {
+            let actual_cost = p.cost
+                + push_direction(
+                    *p.path.last().unwrap(),
+                    'A',
+                    depth - 1,
+                    cache,
+                    &create_dir_keypad,
+                );
+            let mut last_path = p.path;
+            last_path.push('A');
+            let last_item = CostPos {
+                cost: actual_cost,
+                pos: V2d(-1, -1),
+                path: last_path,
+            };
+            shortest_path.push(last_item);
+        } else {
+            for n in V2d(0, 0).neighbors4() {
+                let new_pos = p.pos + n;
+                if pos2key.contains_key(&new_pos) {
+                    let new_cost = p.cost
+                        + push_direction(
+                            *p.path.last().unwrap(),
+                            delta2dir(n),
+                            depth - 1,
+                            cache,
+                            &create_dir_keypad,
+                        );
+                    let e = paths.entry((p.path.clone(), new_pos)).or_insert(u64::MAX);
+                    if new_cost < *e {
+                        *e = new_cost;
+                        let mut path = p.path.clone();
+                        path.push(delta2dir(n));
+                        shortest_path.push(CostPos {
+                            pos: new_pos,
+                            cost: new_cost,
+                            path,
+                        });
+                    }
+                }
+            }
+        }
     }
-    cache.insert(k, res);
-    res
+    panic!("No path found")
 }
 
 pub fn f(input: AocInput) -> AocResult {
-    let num_dirmap = create_num_dirmap();
-    let dirmap = create_dirmap();
-
     let mut res1 = 0;
     let mut res2 = 0;
     let mut cache = HashMap::new();
+
     for l in input.lines() {
         let l = l.unwrap();
         let mut min_presses1 = 0;
@@ -172,13 +159,9 @@ pub fn f(input: AocInput) -> AocResult {
         let mut prev = 'A';
         let mut val = 0;
         for c in l.chars() {
-            let d = num_dirmap.get(&(prev, c)).unwrap();
-            let mut pprev = 'A';
-            for cc in d {
-                min_presses1 += push_direction(pprev, *cc, 2, &dirmap, &mut cache);
-                min_presses2 += push_direction(pprev, *cc, 25, &dirmap, &mut cache);
-                pprev = *cc;
-            }
+            min_presses1 += push_direction(prev, c, 3, &mut cache, &create_num_keypad);
+            min_presses2 += push_direction(prev, c, 26, &mut cache, &create_num_keypad);
+
             prev = c;
             if c != 'A' {
                 val *= 10;
@@ -188,6 +171,5 @@ pub fn f(input: AocInput) -> AocResult {
         res1 += val * min_presses1;
         res2 += val * min_presses2;
     }
-
     (res1, res2).into()
 }
