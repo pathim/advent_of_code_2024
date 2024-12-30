@@ -25,7 +25,7 @@ fn larger(members: &[String], connections: &HashMap<String, HashSet<String>>) ->
 }
 
 fn add_connection(c1: &str, c2: &str, connections: &mut HashMap<String, HashSet<String>>) {
-    let conn = connections.entry(c1.to_string()).or_insert(HashSet::new());
+    let conn = connections.entry(c1.to_string()).or_default();
     conn.insert(c2.to_owned());
 }
 
@@ -57,7 +57,7 @@ pub fn f(input: AocInput) -> AocResult {
             next_cliques.extend(larger(&c, &connections));
         }
         if next_cliques.len() == 1 {
-            break next_cliques.iter().cloned().next().unwrap();
+            break next_cliques.iter().next().cloned().unwrap();
         }
         current_cliques = next_cliques;
     };

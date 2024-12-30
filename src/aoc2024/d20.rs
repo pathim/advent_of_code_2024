@@ -57,11 +57,9 @@ pub fn f(input: AocInput) -> AocResult {
         }
         current_dist += 1;
         for n in current.neighbors4() {
-            if !grid.is_char(n, '#') {
-                if !distances.contains_key(&n) {
-                    current = n;
-                    break;
-                }
+            if !grid.is_char(n, '#') && !distances.contains_key(&n) {
+                current = n;
+                break;
             }
         }
     }

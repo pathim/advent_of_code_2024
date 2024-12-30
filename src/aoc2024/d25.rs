@@ -3,7 +3,7 @@ use crate::{AocInput, AocResult};
 fn read_key(lines: &mut impl Iterator<Item = String>) -> [u8; 5] {
     let mut res = [5; 5];
 
-    while let Some(l) = lines.next() {
+    for l in lines {
         if l.is_empty() {
             break;
         }
@@ -19,7 +19,7 @@ fn read_key(lines: &mut impl Iterator<Item = String>) -> [u8; 5] {
 fn read_lock(lines: &mut impl Iterator<Item = String>) -> [u8; 5] {
     let mut res = [0; 5];
 
-    while let Some(l) = lines.next() {
+    for l in lines {
         if l.is_empty() {
             break;
         }

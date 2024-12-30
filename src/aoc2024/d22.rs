@@ -33,7 +33,7 @@ pub fn f(input: AocInput) -> AocResult {
     for s in input
         .lines()
         .map(|l| l.unwrap().parse::<u64>().unwrap())
-        .map(|v| Secret::new(v))
+        .map(Secret::new)
     {
         let values = s.take(2000).collect::<Vec<_>>();
         res1 += values.last().unwrap();
