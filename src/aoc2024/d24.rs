@@ -5,6 +5,7 @@ use std::{
 
 use crate::{AocInput, AocResult};
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 enum Op {
     And,
     Or,
@@ -23,6 +24,7 @@ impl From<&str> for Op {
     }
 }
 
+#[derive(Clone, Debug)]
 struct Gate {
     op: Op,
     inputs: [String; 2],
@@ -113,6 +115,83 @@ fn check_deps(out: String, deps: &[String]) {
     println!("out:{}, {:?}", out, dep_x);
 }
 
+fn find_gates_by_inputs<'a>(in1: &str, in2: &str, gates: &HashMap<String, Gate>) -> Vec<Gate> {
+    let mut res = Vec::new();
+
+    for g in gates.values() {
+        if (g.inputs[0] == in1 && g.inputs[1] == in2) || (g.inputs[1] == in1 && g.inputs[0] == in2)
+        {
+            res.push(g.clone());
+        }
+    }
+
+    res
+}
+
+fn find_half_adder<'a>(in1: &str, in2: &str, gates: &HashMap<String, Gate>) -> (String, String) {
+    let gs = find_gates_by_inputs(in1, in2, gates);
+    let mut carry = None;
+    let mut value = None;
+
+    for g in gs {
+        match g.op {
+            Op::And => carry = Some(g.output),
+            Op::Xor => value = Some(g.output),
+            _ => panic!("Invalid gate for halfbridge: {:?}", g),
+        }
+    }
+
+    if let (Some(c), Some(v)) = (&carry, &value) {
+        (c.clone(), v.clone())
+    } else {
+        panic!(
+            "Missing half adder output for '{}', '{}', carry: {:?}, value: {:?}",
+            in1, in2, carry, value
+        );
+    }
+}
+
+fn find_full_adder<'a>(
+    in1: &str,
+    in2: &str,
+    cin: &str,
+    gates: &HashMap<String, Gate>,
+) -> (String, String) {
+    let (c1, v1) = find_half_adder(in1, in2, gates);
+    let (c2, v) = find_half_adder(&v1, cin, gates);
+    let mut gs = find_gates_by_inputs(&c1, &c2, gates);
+    if gs.len() != 1 {
+        panic!(
+            "found {} gates for {} {} expected carry OR for {} {}",
+            gs.len(),
+            c1,
+            c2,
+            in1,
+            in2
+        );
+    }
+    let g = gs.pop().unwrap();
+    assert!(g.op == Op::Or);
+    (g.output, v)
+}
+
+fn find_wrong_connections(gates: &HashMap<String, Gate>) {
+    let mut outputs = Vec::new();
+    let (mut carry, v00) = find_half_adder("x00", "y00", gates);
+    outputs.push(v00);
+
+    for i in 1..45 {
+        let in_x = format!("x{:02}", i);
+        let in_y = format!("y{:02}", i);
+        let (c, v) = find_full_adder(&in_x, &in_y, &carry, gates);
+        carry = c;
+        println!("{} {}", v, carry);
+        outputs.push(v);
+    }
+    outputs.push(carry);
+    dbg!(outputs);
+}
+
 pub fn f(input: AocInput) -> AocResult {
     let mut gates = HashMap::new();
     let mut lines_iter = input.lines();
@@ -140,6 +219,7 @@ pub fn f(input: AocInput) -> AocResult {
         }
         gates.insert(out, gate);
     }
+
     outputs.sort();
 
     let mut res1 = 0;
@@ -152,6 +232,8 @@ pub fn f(input: AocInput) -> AocResult {
         res1 <<= 1;
         res1 |= v;
     }
+
+    find_wrong_connections(&gates);
 
     res1.into()
 }
